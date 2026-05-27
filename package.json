@@ -1,0 +1,38 @@
+{
+  "name": "edoofa-voicetrack",
+  "version": "1.0.0",
+  "description": "Edoofa WhatsApp Voice Note Intelligence System — captures, transcribes, summarizes and stores student voice notes",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "setup": "node scripts/setup.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.2",
+    "better-sqlite3": "^11.1.2",
+    "cors": "^2.8.5",
+    "dayjs": "^1.11.12",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.3.1",
+    "form-data": "^4.0.0",
+    "fs-extra": "^11.2.0",
+    "googleapis": "^140.0.1",
+    "groq-sdk": "^0.9.1",
+    "multer": "^1.4.5-lts.1",
+    "node-cron": "^3.0.3",
+    "puppeteer": "^22.12.1",
+    "qrcode": "^1.5.3",
+    "qrcode-terminal": "^0.12.0",
+    "socket.io": "^4.7.5",
+    "whatsapp-web.js": "^1.26.0",
+    "winston": "^3.13.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

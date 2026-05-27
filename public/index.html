@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Edoofa VoiceTrack — Live Dashboard</title>
+  <meta name="description" content="Real-time WhatsApp voice note intelligence dashboard for Edoofa student management"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <script src="/socket.io/socket.io.js"></script>
+  <link rel="stylesheet" href="/style.css"/>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" fill="white"/></svg>
+        </div>
+        <span class="logo-text">VoiceTrack</span>
+      </div>
+      <span class="logo-sub">by Edoofa · Live</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" onclick="switchTab('dashboard',this)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </a>
+      <a href="#" class="nav-item" onclick="switchTab('connect',this)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.73a16 16 0 0 0 7.27 7.27l1.67-1.67a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        WhatsApp Connect
+      </a>
+      <a href="#" class="nav-item" onclick="switchTab('students',this)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Students
+      </a>
+      <a href="#" class="nav-item" onclick="switchTab('notes',this)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+        Voice Notes
+      </a>
+      <a href="#" class="nav-item" onclick="switchTab('actions',this)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Action Items
+      </a>
+      <a href="#" class="nav-item" onclick="switchTab('upload',this)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+        Manual Upload
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="status-indicator" id="waStatusIndicator">
+        <span class="status-dot" id="waDot"></span>
+        <span id="waStatusText">Connecting…</span>
+      </div>
+      <div class="version-tag">Edoofa VoiceTrack v1.0</div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="breadcrumb" id="breadcrumb">Dashboard</div>
+      </div>
+      <div class="topbar-right">
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="Search students, notes…" id="globalSearch" oninput="liveSearch(this.value)"/>
+        </div>
+        <button class="btn-ghost btn-sm" onclick="exportCSV()">⬇ CSV</button>
+        <div class="avatar">EK</div>
+      </div>
+    </header>
+
+    <!-- Live notification bar -->
+    <div class="notif-bar" id="notifBar" style="display:none">
+      <span id="notifText"></span>
+      <button onclick="document.getElementById('notifBar').style.display='none'">✕</button>
+    </div>
+
+    <!-- ===== DASHBOARD ===== -->
+    <div class="tab-content active" id="tab-dashboard">
+      <div class="page-header">
+        <h1>Live Dashboard</h1>
+        <p id="dashSubtitle">Loading today's activity…</p>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card accent-purple">
+          <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg></div>
+          <div class="stat-body"><div class="stat-number" id="statNotes">–</div><div class="stat-label">Voice Notes Today</div></div>
+        </div>
+        <div class="stat-card accent-green">
+          <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+          <div class="stat-body"><div class="stat-number" id="statStudents">–</div><div class="stat-label">Students Tracked</div></div>
+        </div>
+        <div class="stat-card accent-orange">
+          <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+          <div class="stat-body"><div class="stat-number" id="statActions">–</div><div class="stat-label">Pending Actions</div></div>
+        </div>
+        <div class="stat-card accent-blue">
+          <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+          <div class="stat-body"><div class="stat-number" id="statUptime">–</div><div class="stat-label">System Uptime</div></div>
+        </div>
+      </div>
+
+      <!-- Live feed -->
+      <div class="two-col-grid">
+        <div class="card">
+          <div class="card-header"><h3>🔴 Live Feed</h3><span class="badge badge-live">Real-time</span></div>
+          <div class="activity-list" id="liveFeed">
+            <div style="text-align:center;color:var(--text-muted);padding:30px;font-size:13px">
+              Waiting for voice notes… Connect WhatsApp to start
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>⏰ Pending Follow-ups</h3></div>
+          <div id="pendingActions">
+            <div style="text-align:center;color:var(--text-muted);padding:30px;font-size:13px">Loading…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== WHATSAPP CONNECT ===== -->
+    <div class="tab-content" id="tab-connect">
+      <div class="page-header">
+        <h1>WhatsApp Connection</h1>
+        <p>Scan the QR code once to link your WhatsApp — the bot stays connected automatically</p>
+      </div>
+      <div class="connect-layout">
+        <div class="qr-panel card">
+          <div class="qr-status" id="qrStatus">
+            <div class="qr-spinner" id="qrSpinner">
+              <div class="spinner"></div>
+              <p>Generating QR code…</p>
+            </div>
+            <div id="qrImageWrap" style="display:none">
+              <img id="qrImage" src="" alt="WhatsApp QR Code" class="qr-image"/>
+              <p class="qr-instructions">Open WhatsApp → ⋮ Menu → Linked Devices → Link a Device → Scan this code</p>
+            </div>
+            <div id="qrConnected" style="display:none" class="connected-state">
+              <div style="font-size:56px">✅</div>
+              <h3>WhatsApp Connected!</h3>
+              <p id="connectedPhone">Ready to capture voice notes</p>
+            </div>
+          </div>
+        </div>
+        <div class="connect-steps card">
+          <h3>How it works</h3>
+          <div class="step-list">
+            <div class="step-item">
+              <div class="step-num">1</div>
+              <div>
+                <strong>Scan QR Once</strong>
+                <p>Link your Edoofa WhatsApp account — just like WhatsApp Web</p>
+              </div>
+            </div>
+            <div class="step-item">
+              <div class="step-num">2</div>
+              <div>
+                <strong>Bot Monitors Groups</strong>
+                <p>Automatically watches all 2500+ student WhatsApp groups</p>
+              </div>
+            </div>
+            <div class="step-item">
+              <div class="step-num">3</div>
+              <div>
+                <strong>AI Processing</strong>
+                <p>Every voice note is transcribed + summarized within 60 seconds</p>
+              </div>
+            </div>
+            <div class="step-item">
+              <div class="step-num">4</div>
+              <div>
+                <strong>Google Sheets Updated</strong>
+                <p>Structured row added automatically — search, filter, share</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== STUDENTS ===== -->
+    <div class="tab-content" id="tab-students">
+      <div class="page-header">
+        <h1>Student Directory</h1>
+        <p>Manage phone mappings — required for sender identification</p>
+      </div>
+      <div class="students-controls">
+        <input type="text" class="search-input" placeholder="Search students…" oninput="filterStudents(this.value)"/>
+        <button class="btn-primary btn-sm" onclick="showAddStudent()">+ Add Student</button>
+      </div>
+      <div class="students-table-wrap">
+        <table class="data-table" id="studentsTable">
+          <thead>
+            <tr>
+              <th>Student ID</th><th>Name</th><th>Phone</th><th>Counselor</th>
+              <th>Notes Today</th><th>Pending Actions</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="studentsBody">
+            <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:30px">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Add Student Modal -->
+      <div class="modal-overlay" id="addStudentModal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+        <div class="modal-box">
+          <div class="modal-header">
+            <h2>Add / Update Student</h2>
+            <button class="modal-close" onclick="document.getElementById('addStudentModal').style.display='none'">✕</button>
+          </div>
+          <div class="modal-body">
+            <form id="addStudentForm" onsubmit="saveStudent(event)">
+              <div class="form-grid">
+                <div class="form-group"><label>Student ID *</label><input name="student_id" placeholder="EDU-1001" required/></div>
+                <div class="form-group"><label>Full Name *</label><input name="name" placeholder="Aarav Sharma" required/></div>
+                <div class="form-group"><label>Student Phone</label><input name="phone" placeholder="+919810000001"/></div>
+                <div class="form-group"><label>Parent Phone</label><input name="parent_phone" placeholder="+919810000002"/></div>
+                <div class="form-group"><label>Parent Name</label><input name="parent_name" placeholder="Mrs. Sharma"/></div>
+                <div class="form-group"><label>Counselor Name</label><input name="counselor" placeholder="Priya Nair"/></div>
+                <div class="form-group"><label>Counselor Phone</label><input name="counselor_phone" placeholder="+919900000001"/></div>
+                <div class="form-group"><label>WhatsApp Group Name</label><input name="group_name" placeholder="Aarav Sharma - Edoofa"/></div>
+              </div>
+              <button type="submit" class="btn-primary" style="width:100%;margin-top:16px">Save Student</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Student Timeline Modal -->
+      <div class="modal-overlay" id="studentModal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+        <div class="modal-box">
+          <div class="modal-header">
+            <div><h2 id="modalStudentName">—</h2><span id="modalStudentId" class="modal-sub">—</span></div>
+            <button class="modal-close" onclick="document.getElementById('studentModal').style.display='none'">✕</button>
+          </div>
+          <div class="modal-body">
+            <div class="timeline" id="modalTimeline"><div style="text-align:center;color:var(--text-muted);padding:20px">Loading…</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== VOICE NOTES ===== -->
+    <div class="tab-content" id="tab-notes">
+      <div class="page-header">
+        <h1>Voice Notes Log</h1>
+        <p>All processed voice notes with transcripts and AI summaries</p>
+      </div>
+      <div class="records-controls">
+        <input type="text" class="search-input" id="noteSearch" placeholder="Search transcripts, summaries…" oninput="searchNotes(this.value)"/>
+        <select class="filter-select" id="senderFilter" onchange="loadNotes()">
+          <option value="">All Senders</option>
+          <option value="edoofa">Edoofa Team</option>
+          <option value="student">Student</option>
+          <option value="parent">Parent</option>
+        </select>
+        <button class="btn-ghost btn-sm" onclick="loadNotes()">🔄 Refresh</button>
+      </div>
+      <div class="records-list" id="notesList">
+        <div style="text-align:center;color:var(--text-muted);padding:40px">Loading notes…</div>
+      </div>
+      <div style="margin-top:16px;text-align:center">
+        <button class="btn-ghost" id="loadMoreBtn" onclick="loadMoreNotes()" style="display:none">Load More</button>
+      </div>
+    </div>
+
+    <!-- ===== ACTION ITEMS ===== -->
+    <div class="tab-content" id="tab-actions">
+      <div class="page-header">
+        <h1>Action Items</h1>
+        <p>All extracted follow-ups — mark as resolved when done</p>
+      </div>
+      <div class="actions-controls" style="display:flex;gap:12px;margin-bottom:20px">
+        <button class="btn-primary btn-sm" onclick="loadActions(0)">📋 Pending</button>
+        <button class="btn-ghost btn-sm" onclick="loadActions(1)">✅ Resolved</button>
+        <button class="btn-ghost btn-sm" onclick="syncSheets()" id="syncBtn">🔄 Sync to Sheets</button>
+      </div>
+      <div id="actionsList">
+        <div style="text-align:center;color:var(--text-muted);padding:40px">Loading…</div>
+      </div>
+    </div>
+
+    <!-- ===== MANUAL UPLOAD ===== -->
+    <div class="tab-content" id="tab-upload">
+      <div class="page-header">
+        <h1>Manual Upload</h1>
+        <p>Fallback: Upload exported voice notes from WhatsApp chat export or any audio file</p>
+      </div>
+      <div class="upload-layout">
+        <div class="card">
+          <h3 style="margin-bottom:16px">Upload Voice Note Audio</h3>
+          <form id="uploadForm" onsubmit="uploadAudio(event)">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Student ID *</label>
+                <select name="studentId" id="uploadStudentId" required>
+                  <option value="">Select student…</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Sender Type *</label>
+                <select name="senderType" required>
+                  <option value="edoofa">Edoofa Team / Counselor</option>
+                  <option value="student">Student</option>
+                  <option value="parent">Parent</option>
+                </select>
+              </div>
+              <div class="form-group" style="grid-column:1/-1">
+                <label>Sender Name</label>
+                <input name="senderName" placeholder="e.g. Priya Nair or Mrs. Sharma"/>
+              </div>
+              <div class="form-group" style="grid-column:1/-1">
+                <label>Audio File * (OGG, MP3, WAV, M4A)</label>
+                <input type="file" name="audio" accept="audio/*" required id="audioFileInput"/>
+              </div>
+            </div>
+            <button type="submit" class="btn-primary" style="width:100%;margin-top:16px" id="uploadBtn">
+              🎙️ Upload & Process
+            </button>
+          </form>
+        </div>
+
+        <!-- Upload result -->
+        <div class="card" id="uploadResult" style="display:none">
+          <h3 style="margin-bottom:16px;color:var(--green-soft)">✅ Processing Complete</h3>
+          <div id="uploadResultContent"></div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-bottom:12px">📋 Bulk Upload Instructions</h3>
+          <div style="font-size:13px;color:var(--text-secondary);line-height:1.8">
+            <strong>From WhatsApp Chat Export:</strong><br>
+            1. Open student group in WhatsApp<br>
+            2. ⋮ → More → Export Chat<br>
+            3. Select "Include Media"<br>
+            4. Share ZIP to yourself → extract<br>
+            5. Upload individual .opus/.mp3 files here<br><br>
+            <strong>Supported formats:</strong> OGG, OPUS, MP3, WAV, M4A, AAC<br><br>
+            <strong>Tip:</strong> Name files with student ID for easier tracking
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
